@@ -61,24 +61,8 @@ void print_joystick_info(int joy_idx, SDL_Joystick* joy, SDL_GameController* gam
   char guid_str[1024];
   SDL_JoystickGetGUIDString(guid, guid_str, sizeof(guid_str));
 
-  printf("Joystick Name:     '%s'\n", SDL_JoystickName(joy));
-  printf("Joystick GUID:     %s\n", guid_str);
-  printf("Joystick Number:   %2d\n", joy_idx);
-  printf("Number of Axes:    %2d\n", SDL_JoystickNumAxes(joy));
-  printf("Number of Buttons: %2d\n", SDL_JoystickNumButtons(joy));
-  printf("Number of Hats:    %2d\n", SDL_JoystickNumHats(joy));
-  printf("Number of Balls:   %2d\n", SDL_JoystickNumBalls(joy));
-  printf("GameControllerConfig:\n");
-  if (!gamepad)
-  {
-    printf("  missing (see 'gamecontrollerdb.txt' or SDL_GAMECONTROLLERCONFIG)\n");
-  }
-  else
-  {
-    printf("  Name:    '%s'\n", SDL_GameControllerName(gamepad));
-    printf("  Mapping: '%s'\n", SDL_GameControllerMappingForGUID(guid));
-  }
-  printf("\n");
+  printf("%s\n", SDL_JoystickName(joy));
+  printf("%d\n", joy_idx);
 }
 
 void print_help(const char* prg)
@@ -442,7 +426,6 @@ void event_joystick(int joy_idx)
   {
     print_joystick_info(joy_idx, joy, NULL);
 
-    printf("Entering joystick test loop, press Ctrl-c to exit\n");
     int quit = 0;
     SDL_Event event;
 
@@ -451,65 +434,46 @@ void event_joystick(int joy_idx)
       switch(event.type)
       {
         case SDL_JOYAXISMOTION:
-          printf("SDL_JOYAXISMOTION: joystick: %d axis: %d value: %d\n",
-                 event.jaxis.which, event.jaxis.axis, event.jaxis.value);
+          printf("axis(%d %d)\n",
+                 event.jaxis.axis, event.jaxis.value);
+          quit = 1;
           break;
 
         case SDL_JOYBUTTONDOWN:
-          printf("SDL_JOYBUTTONDOWN: joystick: %d button: %d state: %d\n",
-                 event.jbutton.which, event.jbutton.button, event.jbutton.state);
+          printf("button(%d)\n",
+                 event.jbutton.button);
+          quit = 1;
           break;
 
         case SDL_JOYBUTTONUP:
-          printf("SDL_JOYBUTTONUP: joystick: %d button: %d state: %d\n",
-                 event.jbutton.which, event.jbutton.button, event.jbutton.state);
+          printf("button(%d)\n",
+                 event.jbutton.button);
+          quit = 1;
           break;
 
         case SDL_JOYHATMOTION:
-          printf("SDL_JOYHATMOTION: joystick: %d hat: %d value: %d\n",
-                 event.jhat.which, event.jhat.hat, event.jhat.value);
+          printf("hat(%d %d)\n",
+                 event.jhat.hat, event.jhat.value);
+          quit = 1;
           break;
 
         case SDL_JOYBALLMOTION:
-          printf("SDL_JOYBALLMOTION: joystick: %d ball: %d x: %d y: %d\n",
-                 event.jball.which, event.jball.ball, event.jball.xrel, event.jball.yrel);
-          break;
-
-        case SDL_JOYDEVICEADDED:
-          printf("SDL_JOYDEVICEADDED which:%d\n", event.jdevice.which);
-          break;
-
-        case SDL_JOYDEVICEREMOVED:
-          printf("SDL_JOYDEVICEREMOVED which:%d\n", event.jdevice.which);
+          printf("ball: %d x: %d y: %d\n",
+                 event.jball.ball, event.jball.xrel, event.jball.yrel);
+          quit = 1;
           break;
 
         case SDL_CONTROLLERBUTTONDOWN:
-          printf("SDL_CONTROLLERBUTTONDOWN\n");
+          quit = 1;
           break;
 
         case SDL_CONTROLLERBUTTONUP:
-          printf("SDL_CONTROLLERBUTTONUP\n");
-          break;
-
-        case SDL_CONTROLLERDEVICEADDED:
-          printf("SDL_CONTROLLERDEVICEADDED which:%d\n", event.cdevice.which);
-          break;
-
-        case SDL_CONTROLLERDEVICEREMOVED:
-          printf("SDL_CONTROLLERDEVICEREMOVED which:%d\n",  event.cdevice.which);
-          break;
-
-        case SDL_CONTROLLERDEVICEREMAPPED:
-          printf("SDL_CONTROLLERDEVICEREMAPPED which:%d\n", event.cdevice.which);
+          quit = 1;
           break;
 
         case SDL_QUIT:
           quit = 1;
           printf("Recieved interrupt, exiting\n");
-          break;
-
-        default:
-          fprintf(stderr, "Error: Unhandled event type: %d\n", event.type);
           break;
       }
     }
