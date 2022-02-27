@@ -91,31 +91,10 @@ void list_joysticks()
 {
   int num_joysticks = SDL_NumJoysticks();
   if (num_joysticks == 0)
-  {
     printf("No joysticks were found\n");
-  }
   else
-  {
-    printf("Found %d joystick(s)\n\n", num_joysticks);
-    for(int joy_idx = 0; joy_idx < num_joysticks; ++joy_idx)
-    {
-      SDL_Joystick* joy = SDL_JoystickOpen(joy_idx);
-      if (!joy)
-      {
-        fprintf(stderr, "Unable to open joystick %d\n", joy_idx);
-      }
-      else
-      {
-        SDL_GameController* gamepad = SDL_GameControllerOpen(joy_idx);
-        print_joystick_info(joy_idx, joy, gamepad);
-        if (gamepad)
-        {
-          SDL_GameControllerClose(gamepad);
-        }
-        SDL_JoystickClose(joy);
-      }
-    }
-  }
+    for(int i = 0; i < num_joysticks; i++)
+    printf("%d: %s\n", i, SDL_JoystickNameForIndex(i));
 }
 
 void test_joystick(int joy_idx)
@@ -541,14 +520,6 @@ int main(int argc, char** argv)
   else
   {
     atexit(SDL_Quit);
-
-    {
-      int ret = SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt");
-      if (ret < 0)
-      {
-        fprintf(stderr, "error: failed to read gamecontrollerdb.txt: %s\n", SDL_GetError());
-      }
-    }
 
     if (argc == 2 && (strcmp(argv[1], "--help") == 0 ||
                       strcmp(argv[1], "-h") == 0))
