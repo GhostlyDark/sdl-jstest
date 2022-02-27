@@ -17,103 +17,20 @@
 cmake_minimum_required(VERSION 3.0)
 project(sdl-jstest)
 
-option(WARNINGS "Switch on extra warnings" OFF)
-option(WERROR "Turn warnings into errors" OFF)
-option(BUILD_TESTS "Build test cases" OFF)
-option(BUILD_SDL_JSTEST "Build sdl-jstest" ON)
-option(BUILD_SDL2_JSTEST "Build sdl2-jstest" ON)
-
-find_package(Git REQUIRED)
-
-execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --always HEAD
-  OUTPUT_VARIABLE GIT_REPO_VERSION
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-execute_process(COMMAND ${GIT_EXECUTABLE} log -n 1 --pretty=%cd --date=format:%Y-%m-%d ${GIT_REPO_VERSION}
-  OUTPUT_VARIABLE GIT_REPO_DATE
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-add_definitions(-DSDL_JSTEST_VERSION="${GIT_REPO_VERSION}")
-
-include(GNUInstallDirs)
+add_definitions(-DSDL_JSTEST_VERSION="2022-02-27")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
 
 set(CURSES_NEED_NCURSES TRUE)
 find_package(Curses REQUIRED)
 
-if(WARNINGS)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -Wextra -Wnon-virtual-dtor -Weffc++")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wold-style-cast -Wshadow -Wcast-qual -Wconversion")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Winit-self -Wno-unused-parameter")
-endif()
+find_package(PkgConfig REQUIRED)
+pkg_search_module(SDL2 REQUIRED sdl2)
 
-if(WERROR)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-endif()
-
-if (BUILD_TESTS)
-  enable_testing()
-endif(BUILD_TESTS)
-
-if(BUILD_SDL_JSTEST)
-  find_package(SDL REQUIRED)
-
-  add_executable(sdl-jstest sdl-jstest.c)
-  target_link_libraries(sdl-jstest ${SDL_LIBRARY} ${CURSES_LIBRARIES})
-  target_include_directories(sdl-jstest PUBLIC ${SDL_INCLUDE_DIR} ${CURSES_INCLUDE_DIRS})
-
-  configure_file(sdl-jstest.appdata.xml.in ${CMAKE_CURRENT_BINARY_DIR}/sdl-jstest.appdata.xml)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sdl-jstest.appdata.xml
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo)
-
-  if (BUILD_TESTS)
-    add_test(NAME sdl-jstest.appdata.xml
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND appstream-util validate-relax ${CMAKE_CURRENT_BINARY_DIR}/sdl-jstest.appdata.xml)
-  endif(BUILD_TESTS)
-
-  file(COPY sdl-jstest.1
-    DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sdl-jstest.1
-    DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
-
-  install(TARGETS sdl-jstest
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-endif()
-
-if(BUILD_SDL2_JSTEST)
-  find_package(PkgConfig REQUIRED)
-  pkg_search_module(SDL2 REQUIRED sdl2)
-
-  link_directories(${SDL2_LIBRARY_DIRS})
-  add_executable(sdl2-jstest sdl2-jstest.c)
-  target_link_libraries(sdl2-jstest ${SDL2_LIBRARIES} ${CURSES_LIBRARIES})
-  target_include_directories(sdl2-jstest PUBLIC ${SDL2_INCLUDE_DIRS} ${CURSES_INCLUDE_DIRS})
-  target_compile_definitions(sdl2-jstest PUBLIC ${SDL2_CFLAGS_OTHER})
-
-  configure_file(sdl2-jstest.appdata.xml.in ${CMAKE_CURRENT_BINARY_DIR}/sdl2-jstest.appdata.xml)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sdl2-jstest.appdata.xml
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo)
-
-  if (BUILD_TESTS)
-    add_test(NAME sdl2-jstest.appdata.xml
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND appstream-util validate-relax ${CMAKE_CURRENT_BINARY_DIR}/sdl2-jstest.appdata.xml)
-  endif(BUILD_TESTS)
-
-  file(COPY sdl2-jstest.1
-    DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-  file(COPY SDL_GameControllerDB/gamecontrollerdb.txt
-    DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sdl2-jstest.1
-    DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
-
-  install(TARGETS sdl2-jstest
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-endif()
+link_directories(${SDL2_LIBRARY_DIRS})
+add_executable(sdl2-jstest sdl2-jstest.c)
+target_link_libraries(sdl2-jstest ${SDL2_LIBRARIES} ${CURSES_LIBRARIES})
+target_include_directories(sdl2-jstest PUBLIC ${SDL2_INCLUDE_DIRS} ${CURSES_INCLUDE_DIRS})
+target_compile_definitions(sdl2-jstest PUBLIC ${SDL2_CFLAGS_OTHER})
 
 # EOF #

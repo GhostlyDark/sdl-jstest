@@ -16,7 +16,7 @@
 
 #include <SDL.h>
 #include <assert.h>
-#include <curses.h>
+#include "curses.h"
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
