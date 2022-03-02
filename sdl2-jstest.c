@@ -403,7 +403,6 @@ void event_joystick(int joy_idx)
   }
   else
   {
-    print_joystick_info(joy_idx, joy, NULL);
 
     int quit = 0;
     SDL_Event event;
