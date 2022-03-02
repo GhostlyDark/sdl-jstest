@@ -16,7 +16,7 @@
 
 #include <SDL.h>
 #include <assert.h>
-#include "curses.h"
+#include <curses.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -61,8 +61,24 @@ void print_joystick_info(int joy_idx, SDL_Joystick* joy, SDL_GameController* gam
   char guid_str[1024];
   SDL_JoystickGetGUIDString(guid, guid_str, sizeof(guid_str));
 
-  printf("%s\n", SDL_JoystickName(joy));
-  printf("%d\n", joy_idx);
+  printf("Joystick Name:     '%s'\n", SDL_JoystickName(joy));
+  printf("Joystick GUID:     %s\n", guid_str);
+  printf("Joystick Number:   %2d\n", joy_idx);
+  printf("Number of Axes:    %2d\n", SDL_JoystickNumAxes(joy));
+  printf("Number of Buttons: %2d\n", SDL_JoystickNumButtons(joy));
+  printf("Number of Hats:    %2d\n", SDL_JoystickNumHats(joy));
+  printf("Number of Balls:   %2d\n", SDL_JoystickNumBalls(joy));
+  printf("GameControllerConfig:\n");
+  if (!gamepad)
+  {
+    printf("  missing (see 'gamecontrollerdb.txt' or SDL_GAMECONTROLLERCONFIG)\n");
+  }
+  else
+  {
+    printf("  Name:    '%s'\n", SDL_GameControllerName(gamepad));
+    printf("  Mapping: '%s'\n", SDL_GameControllerMappingForGUID(guid));
+  }
+  printf("\n");
 }
 
 void print_help(const char* prg)
@@ -73,14 +89,17 @@ void print_help(const char* prg)
          "/dev/input/jsX interface\n");
   printf("\n");
   printf("Options:\n");
-  printf("  -h, --help             Print this help\n");
-  printf("  --version              Print version number and exit\n");
-  printf("  -l, --list             Search for available joysticks and list their properties\n");
-  printf("  -t, --test JOYNUM      Display a graphical representation of the current joystick state\n");
-  printf("  -g, --gamecontroller IDX\n"
-         "                         Test GameController\n");
-  printf("  -e, --event JOYNUM     Display the events that are received from the joystick\n");
-  printf("  -r, --rumble JOYNUM    Test rumble effects on gamepad JOYNUM\n");
+  printf("  -h,  --help                    Print this help\n");
+  printf("  -v,  --version                 Print version number and exit\n");
+  printf("  -l,  --list                    Search for available joysticks and list their properties\n");
+  printf("  -ls, --listsimple              Search for available joysticks and list their index and name\n");
+  printf("  -t,  --test JOYNUM             Display a graphical representation of the current joystick state\n");
+  printf("  -g,  --gamecontroller JOYNUM   Test GameController\n");
+  printf("  -e,  --event JOYNUM            Display the events that are received from the joystick\n");
+  printf("  -es, --eventsimple JOYNUM      Display an event from the joystick and quit\n");
+  printf("  -i,  --identifier JOYNUM       Print joystick GUID\n");
+  printf("  -m,  --mapping JOYNUM          Print joystick mapping\n");
+  printf("  -r,  --rumble JOYNUM           Test rumble effects on gamepad JOYNUM\n");
   printf("\n");
   printf("Examples:\n");
   printf("  %s --list\n", prg);
@@ -88,6 +107,37 @@ void print_help(const char* prg)
 }
 
 void list_joysticks()
+{
+  int num_joysticks = SDL_NumJoysticks();
+  if (num_joysticks == 0)
+  {
+    printf("No joysticks were found\n");
+  }
+  else
+  {
+    printf("Found %d joystick(s)\n\n", num_joysticks);
+    for(int joy_idx = 0; joy_idx < num_joysticks; ++joy_idx)
+    {
+      SDL_Joystick* joy = SDL_JoystickOpen(joy_idx);
+      if (!joy)
+      {
+        fprintf(stderr, "Unable to open joystick %d\n", joy_idx);
+      }
+      else
+      {
+        SDL_GameController* gamepad = SDL_GameControllerOpen(joy_idx);
+        print_joystick_info(joy_idx, joy, gamepad);
+        if (gamepad)
+        {
+          SDL_GameControllerClose(gamepad);
+        }
+        SDL_JoystickClose(joy);
+      }
+    }
+  }
+}
+
+void listsimple_joysticks()
 {
   int num_joysticks = SDL_NumJoysticks();
   if (num_joysticks == 0)
@@ -403,6 +453,92 @@ void event_joystick(int joy_idx)
   }
   else
   {
+    print_joystick_info(joy_idx, joy, NULL);
+
+    printf("Entering joystick test loop, press Ctrl-c to exit\n");
+    int quit = 0;
+    SDL_Event event;
+
+    while(!quit && SDL_WaitEvent(&event))
+    {
+      switch(event.type)
+      {
+        case SDL_JOYAXISMOTION:
+          printf("SDL_JOYAXISMOTION: joystick: %d axis: %d value: %d\n",
+                 event.jaxis.which, event.jaxis.axis, event.jaxis.value);
+          break;
+
+        case SDL_JOYBUTTONDOWN:
+          printf("SDL_JOYBUTTONDOWN: joystick: %d button: %d state: %d\n",
+                 event.jbutton.which, event.jbutton.button, event.jbutton.state);
+          break;
+
+        case SDL_JOYBUTTONUP:
+          printf("SDL_JOYBUTTONUP: joystick: %d button: %d state: %d\n",
+                 event.jbutton.which, event.jbutton.button, event.jbutton.state);
+          break;
+
+        case SDL_JOYHATMOTION:
+          printf("SDL_JOYHATMOTION: joystick: %d hat: %d value: %d\n",
+                 event.jhat.which, event.jhat.hat, event.jhat.value);
+          break;
+
+        case SDL_JOYBALLMOTION:
+          printf("SDL_JOYBALLMOTION: joystick: %d ball: %d x: %d y: %d\n",
+                 event.jball.which, event.jball.ball, event.jball.xrel, event.jball.yrel);
+          break;
+
+        case SDL_JOYDEVICEADDED:
+          printf("SDL_JOYDEVICEADDED which:%d\n", event.jdevice.which);
+          break;
+
+        case SDL_JOYDEVICEREMOVED:
+          printf("SDL_JOYDEVICEREMOVED which:%d\n", event.jdevice.which);
+          break;
+
+        case SDL_CONTROLLERBUTTONDOWN:
+          printf("SDL_CONTROLLERBUTTONDOWN\n");
+          break;
+
+        case SDL_CONTROLLERBUTTONUP:
+          printf("SDL_CONTROLLERBUTTONUP\n");
+          break;
+
+        case SDL_CONTROLLERDEVICEADDED:
+          printf("SDL_CONTROLLERDEVICEADDED which:%d\n", event.cdevice.which);
+          break;
+
+        case SDL_CONTROLLERDEVICEREMOVED:
+          printf("SDL_CONTROLLERDEVICEREMOVED which:%d\n",  event.cdevice.which);
+          break;
+
+        case SDL_CONTROLLERDEVICEREMAPPED:
+          printf("SDL_CONTROLLERDEVICEREMAPPED which:%d\n", event.cdevice.which);
+          break;
+
+        case SDL_QUIT:
+          quit = 1;
+          printf("Recieved interrupt, exiting\n");
+          break;
+
+        default:
+          fprintf(stderr, "Error: Unhandled event type: %d\n", event.type);
+          break;
+      }
+    }
+    SDL_JoystickClose(joy);
+  }
+}
+
+void eventsimple_joystick(int joy_idx)
+{
+  SDL_Joystick* joy = SDL_JoystickOpen(joy_idx);
+  if (!joy)
+  {
+    fprintf(stderr, "Unable to open joystick %d\n", joy_idx);
+  }
+  else
+  {
 
     int quit = 0;
     SDL_Event event;
@@ -456,6 +592,38 @@ void event_joystick(int joy_idx)
       }
     }
     SDL_JoystickClose(joy);
+  }
+}
+
+void guid_joystick(int joy_idx)
+{
+  SDL_Joystick* joy = SDL_JoystickOpen(joy_idx);
+  SDL_JoystickGUID guid = SDL_JoystickGetGUID(joy);
+  char guid_str[1024];
+  SDL_JoystickGetGUIDString(guid, guid_str, sizeof(guid_str));
+  if (!joy)
+  {
+    fprintf(stderr, "Unable to open joystick %d\n", joy_idx);
+  }
+  else
+  {
+	printf("%s\n", guid_str);
+  }
+}
+
+void mapping_joystick(int joy_idx)
+{
+  SDL_Joystick* joy = SDL_JoystickOpen(joy_idx);
+  SDL_JoystickGUID guid = SDL_JoystickGetGUID(joy);
+  char guid_str[1024];
+  SDL_JoystickGetGUIDString(guid, guid_str, sizeof(guid_str));
+  if (!joy)
+  {
+    fprintf(stderr, "Unable to open joystick %d\n", joy_idx);
+  }
+  else
+  {
+	printf("%s\n",SDL_GameControllerMappingForGUID(guid));
   }
 }
 
@@ -519,13 +687,22 @@ int main(int argc, char** argv)
   else
   {
     atexit(SDL_Quit);
+	
+    {
+      int ret = SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt");
+//      if (ret < 0)
+//      {
+//        fprintf(stderr, "error: failed to read gamecontrollerdb.txt: %s\n", SDL_GetError());
+//      }
+    }
 
     if (argc == 2 && (strcmp(argv[1], "--help") == 0 ||
                       strcmp(argv[1], "-h") == 0))
     {
       print_help(argv[0]);
     }
-    else if (argc == 2 && (strcmp(argv[1], "--version") == 0))
+    else if (argc == 2 && (strcmp(argv[1], "--version") == 0 ||
+	                       (strcmp(argv[1], "-v") == 0)))
     {
       printf("sdl2-jstest " SDL_JSTEST_VERSION "\n");
       exit(EXIT_SUCCESS);
@@ -534,6 +711,11 @@ int main(int argc, char** argv)
                            (strcmp(argv[1], "-l") == 0)))
     {
       list_joysticks();
+    }
+    else if (argc == 2 && (strcmp(argv[1], "--listsimple") == 0 ||
+                           (strcmp(argv[1], "-ls") == 0)))
+    {
+      listsimple_joysticks();
     }
     else if (argc == 3 && (strcmp(argv[1], "--gamecontroller") == 0 ||
                            strcmp(argv[1], "-g") == 0))
@@ -573,6 +755,45 @@ int main(int argc, char** argv)
         exit(1);
       }
       event_joystick(joy_idx);
+    }
+    else if (argc == 3 && (strcmp(argv[1], "--eventsimple") == 0 ||
+                           strcmp(argv[1], "-es") == 0))
+    {
+      int joy_idx;
+      if (!str2int(argv[2], &joy_idx))
+      {
+        fprintf(stderr, "Error: JOYSTICKNUM argument must be a number, but was '%s'\n", argv[2]);
+        exit(1);
+      }
+      eventsimple_joystick(joy_idx);
+    }
+    else if (argc == 3 && (strcmp(argv[1], "--identifier") == 0 ||
+                           strcmp(argv[1], "-i") == 0))
+    {
+      int joy_idx;
+      if (!str2int(argv[2], &joy_idx))
+      {
+        fprintf(stderr, "Error: JOYSTICKNUM argument must be a number, but was '%s'\n", argv[2]);
+        exit(1);
+      }
+	  else
+	  {
+        guid_joystick(joy_idx);
+	  }
+    }
+    else if (argc == 3 && (strcmp(argv[1], "--mapping") == 0 ||
+                           strcmp(argv[1], "-m") == 0))
+    {
+      int joy_idx;
+      if (!str2int(argv[2], &joy_idx))
+      {
+        fprintf(stderr, "Error: JOYSTICKNUM argument must be a number, but was '%s'\n", argv[2]);
+        exit(1);
+      }
+	  else
+	  {
+        mapping_joystick(joy_idx);
+	  }
     }
     else if (argc == 3 && (strcmp(argv[1], "--rumble") == 0 ||
                            strcmp(argv[1], "-r") == 0))
