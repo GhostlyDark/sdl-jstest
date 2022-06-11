@@ -587,7 +587,7 @@ void eventsimple_joystick(int joy_idx)
 
         case SDL_QUIT:
           quit = 1;
-          printf("Recieved interrupt, exiting\n");
+//        printf("Recieved interrupt, exiting\n");
           break;
       }
     }
@@ -603,7 +603,7 @@ void guid_joystick(int joy_idx)
   SDL_JoystickGetGUIDString(guid, guid_str, sizeof(guid_str));
   if (!joy)
   {
-    fprintf(stderr, "Unable to open joystick %d\n", joy_idx);
+//  fprintf(stderr, "Unable to open joystick %d\n", joy_idx);
   }
   else
   {
@@ -619,7 +619,7 @@ void mapping_joystick(int joy_idx)
   SDL_JoystickGetGUIDString(guid, guid_str, sizeof(guid_str));
   if (!joy)
   {
-    fprintf(stderr, "Unable to open joystick %d\n", joy_idx);
+//  fprintf(stderr, "Unable to open joystick %d\n", joy_idx);
   }
   else
   {
