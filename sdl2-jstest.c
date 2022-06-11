@@ -814,7 +814,7 @@ int main(int argc, char** argv)
     else
     {
       fprintf(stderr, "%s: unknown arguments\n", argv[0]);
-      fprintf(stderr, "Try '%s --help' for more informations\n", argv[0]);
+      fprintf(stderr, "Try '%s --help' for more information\n", argv[0]);
     }
   }
 }
