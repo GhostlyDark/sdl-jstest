@@ -14,6 +14,7 @@ This version of `sdl2-jstest` has been modified and expanded for the [Electron M
 -i,  --identifier JOYNUM
 -m,  --mapping JOYNUM
 ```
+The option to display a graphical representation of the current joystick state has been removed in favor of less dependencies.
 
 
 Requirements
@@ -23,7 +24,6 @@ Requirements
 
 * cmake
 * libsdl2-dev
-* libncurses5-dev
 
 Optionally, put `gamecontrollerdb.txt` from [SDL_GameControllerDB](https://github.com/gabomdq/SDL_GameControllerDB) into the same folder as the binary to improve the joystick mapping function.
 
@@ -47,7 +47,6 @@ Options
 -v,  --version                 Print version number
 -l,  --list                    Search for available joysticks and list their properties
 -ls, --listsimple              Search for available joysticks and list their index and name
--t,  --test JOYNUM             Display a graphical representation of the current joystick state
 -g,  --gamecontroller JOYNUM   Test game controller
 -e,  --event JOYNUM            Display the events that are received from the joystick
 -es, --eventsimple JOYNUM      Display an event from the joystick and quit

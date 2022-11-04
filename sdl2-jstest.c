@@ -16,24 +16,10 @@
 
 #include <SDL.h>
 #include <assert.h>
-#include <curses.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-void print_bar(int pos, int len)
-{
-  addch('[');
-  for(int i = 0; i < len; ++i)
-  {
-    if (i == pos)
-      addch('#');
-    else
-      addch(' ');
-  }
-  addch(']');
-}
 
 int str2int(const char* str, int* val)
 {
@@ -93,7 +79,6 @@ void print_help(const char* prg)
   printf("  -v,  --version                 Print version number and exit\n");
   printf("  -l,  --list                    Search for available joysticks and list their properties\n");
   printf("  -ls, --listsimple              Search for available joysticks and list their index and name\n");
-  printf("  -t,  --test JOYNUM             Display a graphical representation of the current joystick state\n");
   printf("  -g,  --gamecontroller JOYNUM   Test GameController\n");
   printf("  -e,  --event JOYNUM            Display the events that are received from the joystick\n");
   printf("  -es, --eventsimple JOYNUM      Display an event from the joystick and quit\n");
@@ -103,7 +88,7 @@ void print_help(const char* prg)
   printf("\n");
   printf("Examples:\n");
   printf("  %s --list\n", prg);
-  printf("  %s --test 1\n", prg);
+  printf("  %s --event 0\n", prg);
 }
 
 void list_joysticks()
@@ -145,161 +130,6 @@ void listsimple_joysticks()
   else
     for(int i = 0; i < num_joysticks; i++)
     printf("%d: %s\n", i, SDL_JoystickNameForIndex(i));
-}
-
-void test_joystick(int joy_idx)
-{
-  SDL_Joystick* joy = SDL_JoystickOpen(joy_idx);
-  if (!joy)
-  {
-    fprintf(stderr, "Unable to open joystick %d\n", joy_idx);
-  }
-  else
-  {
-    initscr();
-
-    //cbreak();
-    noecho();
-    nodelay(stdscr, TRUE);
-    //nonl();
-    curs_set(0);
-
-    int num_axes    = SDL_JoystickNumAxes(joy);
-    int num_buttons = SDL_JoystickNumButtons(joy);
-    int num_hats    = SDL_JoystickNumHats(joy);
-    int num_balls   = SDL_JoystickNumBalls(joy);
-
-    Sint16* axes    = calloc(num_axes,    sizeof(Sint16));
-    Uint8*  buttons = calloc(num_buttons, sizeof(Uint8));
-    Uint8*  hats    = calloc(num_hats,    sizeof(Uint8));
-    Uint8*  balls   = calloc(num_balls,   2*sizeof(Sint16));
-
-    int quit = 0;
-    SDL_Event event;
-    while(!quit)
-    {
-      SDL_Delay(10);
-
-      bool something_new = FALSE;
-      while (SDL_PollEvent(&event)) {
-        something_new = TRUE;
-        switch(event.type)
-        {
-          case SDL_JOYAXISMOTION:
-            assert(event.jaxis.axis < num_axes);
-            axes[event.jaxis.axis] = event.jaxis.value;
-            break;
-
-          case SDL_JOYBUTTONDOWN:
-          case SDL_JOYBUTTONUP:
-            assert(event.jbutton.button < num_buttons);
-            buttons[event.jbutton.button] = event.jbutton.state;
-            break;
-
-          case SDL_JOYHATMOTION:
-            assert(event.jhat.hat < num_hats);
-            hats[event.jhat.hat] = event.jhat.value;
-            break;
-
-          case SDL_JOYBALLMOTION:
-            assert(event.jball.ball < num_balls);
-            balls[2*event.jball.ball + 0] = event.jball.xrel;
-            balls[2*event.jball.ball + 1] = event.jball.yrel;
-            break;
-
-          case SDL_QUIT:
-            quit = 1;
-            printf("Recieved interrupt, exiting\n");
-            break;
-
-          default:
-            fprintf(stderr, "Error: Unhandled event type: %d\n", event.type);
-        }
-      }
-
-      if (something_new)
-      {
-        //clear();
-        move(0,0);
-
-        printw("Joystick Name:   '%s'\n", SDL_JoystickName(joy));
-        printw("Joystick Number: %d\n", joy_idx);
-        printw("\n");
-
-        printw("Axes %2d:\n", num_axes);
-        for(int i = 0; i < num_axes; ++i)
-        {
-          int len = COLS - 20;
-          printw("  %2d: %6d  ", i, axes[i]);
-          print_bar((axes[i] + 32767) * (len-1) / 65534, len);
-          addch('\n');
-        }
-        printw("\n");
-
-        printw("Buttons %2d:\n", num_buttons);
-        for(int i = 0; i < num_buttons; ++i)
-        {
-          printw("  %2d: %d  %s\n", i, buttons[i], buttons[i] ? "[#]":"[ ]");
-        }
-        printw("\n");
-
-        printw("Hats %2d:\n", num_hats);
-        for(int i = 0; i < num_hats; ++i)
-        {
-          printw("  %2d: value: %d\n", i, hats[i]);
-          printw("  +-----+  up:    %c\n"
-                 "  |%c %c %c|  down:  %c\n"
-                 "  |%c %c %c|  left:  %c\n"
-                 "  |%c %c %c|  right: %c\n"
-                 "  +-----+\n",
-
-                 (hats[i] & SDL_HAT_UP)?'1':'0',
-
-                 ((hats[i] & SDL_HAT_UP) && (hats[i] & SDL_HAT_LEFT)) ? 'O' : ' ',
-                 ((hats[i] & SDL_HAT_UP) && !(hats[i] & (SDL_HAT_LEFT | SDL_HAT_RIGHT))) ? 'O' : ' ',
-                 ((hats[i] & SDL_HAT_UP) && (hats[i] & SDL_HAT_RIGHT)) ? 'O' : ' ',
-
-                 (hats[i] & SDL_HAT_DOWN)?'1':'0',
-
-                 (!(hats[i] & (SDL_HAT_UP | SDL_HAT_DOWN)) && (hats[i] & SDL_HAT_LEFT)) ? 'O' : ' ',
-                 (!(hats[i] & (SDL_HAT_UP | SDL_HAT_DOWN)) && !(hats[i] & (SDL_HAT_LEFT | SDL_HAT_RIGHT))) ? 'O' : ' ',
-                 (!(hats[i] & (SDL_HAT_UP | SDL_HAT_DOWN)) && (hats[i] & SDL_HAT_RIGHT)) ? 'O' : ' ',
-
-                 (hats[i] & SDL_HAT_LEFT)?'1':'0',
-
-                 ((hats[i] & SDL_HAT_DOWN) && (hats[i] & SDL_HAT_LEFT)) ? 'O' : ' ',
-                 ((hats[i] & SDL_HAT_DOWN) && !(hats[i] & (SDL_HAT_LEFT | SDL_HAT_RIGHT))) ? 'O' : ' ',
-                 ((hats[i] & SDL_HAT_DOWN) && (hats[i] & SDL_HAT_RIGHT)) ? 'O' : ' ',
-
-                 (hats[i] & SDL_HAT_RIGHT)?'1':'0');
-        }
-        printw("\n");
-
-        printw("Balls %2d: ", num_balls);
-        for(int i = 0; i < num_balls; ++i)
-        {
-          printw("  %2d: %6d %6d\n", i, balls[2*i+0], balls[2*i+1]);
-        }
-        printw("\n");
-        printw("\n");
-        printw("Press Ctrl-c to exit\n");
-
-        refresh();
-      }
-
-      if ( getch() == 3 ) // Ctrl-c
-      {
-        quit = 1;
-      }
-    } // while
-
-    free(balls);
-    free(hats);
-    free(buttons);
-    free(axes);
-
-    endwin();
-  }
 }
 
 void test_gamecontroller_events(SDL_GameController* gamepad)
@@ -733,20 +563,6 @@ int main(int argc, char** argv)
         test_gamecontroller(idx);
       }
     }
-    else if (argc == 3 && (strcmp(argv[1], "--test") == 0 ||
-                           strcmp(argv[1], "-t") == 0))
-    {
-      int joy_idx;
-      if (!str2int(argv[2], &joy_idx))
-      {
-        fprintf(stderr, "Error: JOYSTICKNUM argument must be a number, but was '%s'\n", argv[2]);
-        exit(1);
-      }
-      else
-      {
-        test_joystick(joy_idx);
-      }
-    }
     else if (argc == 3 && (strcmp(argv[1], "--event") == 0 ||
                            strcmp(argv[1], "-e") == 0))
     {
@@ -820,3 +636,4 @@ int main(int argc, char** argv)
 }
 
 /* EOF */
+

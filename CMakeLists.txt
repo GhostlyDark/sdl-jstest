@@ -17,20 +17,17 @@
 cmake_minimum_required(VERSION 3.0)
 project(sdl-jstest)
 
-add_definitions(-DSDL_JSTEST_VERSION="2022-06-12")
+add_definitions(-DSDL_JSTEST_VERSION="2022-11-04")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
-
-set(CURSES_NEED_NCURSES TRUE)
-find_package(Curses REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_search_module(SDL2 REQUIRED sdl2)
 
 link_directories(${SDL2_LIBRARY_DIRS})
 add_executable(sdl2-jstest sdl2-jstest.c)
-target_link_libraries(sdl2-jstest ${SDL2_LIBRARIES} ${CURSES_LIBRARIES})
-target_include_directories(sdl2-jstest PUBLIC ${SDL2_INCLUDE_DIRS} ${CURSES_INCLUDE_DIRS})
+target_link_libraries(sdl2-jstest ${SDL2_LIBRARIES})
+target_include_directories(sdl2-jstest PUBLIC ${SDL2_INCLUDE_DIRS})
 target_compile_definitions(sdl2-jstest PUBLIC ${SDL2_CFLAGS_OTHER})
 
 # EOF #
