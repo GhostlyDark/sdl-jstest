@@ -403,11 +403,11 @@ void eventsimple_joystick(int joy_idx)
           quit = 1;
           break;
 
-        case SDL_JOYBALLMOTION:
-          printf("ball: %d x: %d y: %d\n",
-                 event.jball.ball, event.jball.xrel, event.jball.yrel);
-          quit = 1;
-          break;
+//      case SDL_JOYBALLMOTION:
+//        printf("ball: %d x: %d y: %d\n",
+//               event.jball.ball, event.jball.xrel, event.jball.yrel);
+//        quit = 1;
+//        break;
 
         case SDL_CONTROLLERBUTTONDOWN:
           quit = 1;
