@@ -378,7 +378,7 @@ void eventsimple_joystick(int joy_idx)
       switch(event.type)
       {
         case SDL_JOYAXISMOTION:
-		  if(event.jaxis.value != 0){
+		  if(event.jaxis.value >= 10000 || event.jaxis.value <= -10000){
           printf("axis(%d %d)\n",
                  event.jaxis.axis, event.jaxis.value);
           quit = 1;
