@@ -38,6 +38,7 @@ cd build
 cmake ..
 make
 ```
+If needed, run `cmake .. -G "MSYS Makefiles"` or `cmake .. -G "Unix Makefiles"` instead of `cmake ..` to change the generator.
 
 
 Options
