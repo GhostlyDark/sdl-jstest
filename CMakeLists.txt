@@ -17,8 +17,6 @@
 cmake_minimum_required(VERSION 3.0)
 project(sdl-jstest)
 
-add_definitions(-DSDL_JSTEST_VERSION="2022-11-07")
-
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
 
 find_package(PkgConfig REQUIRED)

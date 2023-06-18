@@ -536,7 +536,7 @@ int main(int argc, char** argv)
     else if (argc == 2 && (strcmp(argv[1], "--version") == 0 ||
 	                       (strcmp(argv[1], "-v") == 0)))
     {
-      printf("sdl2-jstest " SDL_JSTEST_VERSION "\n");
+      printf("2022-11-07\n");
       exit(EXIT_SUCCESS);
     }
     else if (argc == 2 && (strcmp(argv[1], "--list") == 0 ||
